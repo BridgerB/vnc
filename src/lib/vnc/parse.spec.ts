@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type HostPort, parseHostPort, parseQuickConnect } from "./parse.js";
+import { type HostPort, parseHostPort, parseQuickConnect } from "./parse.ts";
 
 describe("parseHostPort", () => {
 	const cases: [name: string, input: string, want: HostPort | null][] = [

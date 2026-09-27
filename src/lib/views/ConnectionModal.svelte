@@ -2,8 +2,8 @@
 import { untrack } from "svelte";
 import type { Profile } from "$lib/types";
 import Icon from "$lib/ui/Icon.svelte";
-import { parseHostPort } from "$lib/vnc/parse.js";
-import { newId } from "$lib/vnc/profiles.js";
+import { parseHostPort } from "$lib/vnc/parse.ts";
+import { newId } from "$lib/vnc/profiles.ts";
 
 interface Props {
 	profile?: Profile | null;

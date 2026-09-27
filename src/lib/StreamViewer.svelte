@@ -1,6 +1,6 @@
 <script lang="ts">
 import { onDestroy } from "svelte";
-import { KEYCODES } from "$lib/stream/keycodes.js";
+import { KEYCODES } from "$lib/stream/keycodes.ts";
 import type {
 	ConnStatus,
 	Settings,

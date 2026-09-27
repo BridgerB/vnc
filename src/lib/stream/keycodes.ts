@@ -2,7 +2,7 @@
  * Map a browser KeyboardEvent.code to a Linux input-event keycode
  * (linux/input-event-codes.h) for uinput injection.
  */
-export const KEYCODES = /** @type {Record<string, number>} */ ({
+export const KEYCODES: Record<string, number> = {
 	Escape: 1,
 	Digit1: 2,
 	Digit2: 3,
@@ -105,4 +105,4 @@ export const KEYCODES = /** @type {Record<string, number>} */ ({
 	MetaLeft: 125,
 	MetaRight: 126,
 	ContextMenu: 127,
-});
+};

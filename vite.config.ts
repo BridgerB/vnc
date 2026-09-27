@@ -3,7 +3,7 @@ import adapter from "@sveltejs/adapter-node";
 import { sveltekit } from "@sveltejs/kit/vite";
 import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
-import { vncBridgePlugin } from "./src/lib/server/vnc/vite-plugin.js";
+import { vncBridgePlugin } from "./src/lib/server/vnc/vite-plugin.ts";
 
 export default defineConfig({
 	plugins: [

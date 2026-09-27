@@ -1,6 +1,6 @@
 <script lang="ts">
 import { onDestroy } from "svelte";
-import { keysymFromEvent } from "$lib/keysym.js";
+import { keysymFromEvent } from "$lib/keysym.ts";
 import type {
 	ConnStatus,
 	Settings,

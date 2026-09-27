@@ -2,7 +2,7 @@
 import { onMount } from "svelte";
 import type { Profile, ScaleMode, Settings, Target } from "$lib/types";
 import Icon from "$lib/ui/Icon.svelte";
-import { parseQuickConnect } from "$lib/vnc/parse.js";
+import { parseQuickConnect } from "$lib/vnc/parse.ts";
 import ConnectionModal from "./ConnectionModal.svelte";
 import MachineCard from "./MachineCard.svelte";
 

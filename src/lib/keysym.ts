@@ -3,8 +3,7 @@
  * Covers printable characters (via event.key) plus the common non-printable keys.
  */
 
-/** @type {Record<string, number>} */
-const NAMED = {
+const NAMED: Record<string, number> = {
 	Backspace: 0xff08,
 	Tab: 0xff09,
 	Enter: 0xff0d,
@@ -32,24 +31,27 @@ const NAMED = {
 	" ": 0x0020,
 };
 
-/** @param {KeyboardEvent} e @returns {number} keysym, or 0 if unmappable */
-export function keysymFromEvent(e) {
+const FUNCTION_KEY = /^F([1-9]|1\d|2[0-4])$/;
+const KEYSYM_F1 = 0xffbe;
+const KEYSYM_UNICODE_BASE = 0x01000000;
+
+/** The X11 keysym for a KeyboardEvent, or 0 when it can't be mapped. */
+export const keysymFromEvent = (e: KeyboardEvent): number => {
 	const k = e.key;
 
-	// Function keys F1..F24 → 0xffbe..
-	if (/^F([1-9]|1\d|2[0-4])$/.test(k)) {
-		return 0xffbe + (parseInt(k.slice(1), 10) - 1);
-	}
+	// Function keys F1..F24 -> 0xffbe..
+	if (FUNCTION_KEY.test(k))
+		return KEYSYM_F1 + (Number.parseInt(k.slice(1), 10) - 1);
 
-	if (k in NAMED) return NAMED[k];
+	const named = NAMED[k];
+	if (named !== undefined) return named;
 
-	// Single printable character: its Unicode code point is the keysym for
+	// A single printable character: its Unicode code point is the keysym for
 	// Latin-1; higher code points use the 0x01000000 + codepoint convention.
 	if (k.length === 1) {
 		const cp = k.codePointAt(0) ?? 0;
-		if (cp <= 0xff) return cp;
-		return 0x01000000 + cp;
+		return cp <= 0xff ? cp : KEYSYM_UNICODE_BASE + cp;
 	}
 
 	return 0;
-}
+};

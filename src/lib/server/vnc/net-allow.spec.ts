@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isAllowedHost, isValidPort } from "./net-allow.js";
+import { isAllowedHost, isValidPort } from "./net-allow.ts";
 
 describe("isAllowedHost", () => {
 	const cases: [name: string, host: string, want: boolean][] = [

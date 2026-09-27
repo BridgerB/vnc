@@ -10,7 +10,7 @@ import {
 	saveProfiles,
 	saveSettings,
 	updateProfile,
-} from "$lib/vnc/profiles.js";
+} from "$lib/vnc/profiles.ts";
 
 // Start from defaults on both server and client so hydration matches; the
 // persisted values are loaded in onMount (same pattern as profiles).
