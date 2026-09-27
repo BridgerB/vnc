@@ -1,0 +1,269 @@
+/* Relay — Enterprise Clean design tokens.
+   Slate surfaces, signal-orange accent, Manrope + JetBrains Mono. Dark-first. */
+
+:root {
+	/* Surfaces */
+	--void: #0a0c0f; /* canvas void */
+	--bg: #101317; /* app background */
+	--chrome: #14181e; /* sidebar / chrome */
+	--surface: #171b21; /* card / panel surface */
+	--card: #1b2028; /* raised card */
+	--raised: #242a33; /* popover / tooltip */
+	--modal: #191e25; /* modal body */
+
+	/* Accent + semantic */
+	--accent: #ff6a3d;
+	--accent-soft: #ff8b66;
+	--accent-press: #e8552b;
+	--accent-ink: #2d0f04; /* text on accent */
+	--accent-tint: #ffb199; /* accent-tinted text */
+	--online: #34d399;
+	--online-soft: #7ee2b8;
+	--warn: #fbbf24;
+	--warn-soft: #f3d07a;
+	--error: #f43f5e;
+
+	/* Text */
+	--ink: #e9ecef; /* primary */
+	--ink-2: #cfd5dc; /* secondary */
+	--muted: #9aa3ad; /* muted */
+	--faint: #6b7280; /* faint / labels */
+	--disabled: #4b5361;
+
+	/* Hairlines */
+	--line: rgba(255, 255, 255, 0.07);
+	--line-2: rgba(255, 255, 255, 0.09);
+	--line-soft: rgba(255, 255, 255, 0.06);
+	--fill: rgba(255, 255, 255, 0.06);
+	--fill-2: rgba(255, 255, 255, 0.09);
+
+	/* Accent washes */
+	--accent-wash: rgba(255, 106, 61, 0.14);
+	--accent-wash-2: rgba(255, 106, 61, 0.22);
+	--accent-ring: rgba(255, 106, 61, 0.5);
+	--accent-glow: rgba(255, 106, 61, 0.12);
+	--online-wash: rgba(52, 211, 153, 0.14);
+	--warn-wash: rgba(251, 191, 36, 0.14);
+	--error-wash: rgba(244, 63, 94, 0.14);
+
+	/* Radius */
+	--r-sm: 8px;
+	--r: 10px;
+	--r-md: 11px;
+	--r-lg: 14px;
+	--r-xl: 16px;
+
+	/* Elevation */
+	--shadow-card: 0 14px 30px rgba(0, 0, 0, 0.45);
+	--shadow-float:
+		0 0 0 1px rgba(255, 255, 255, 0.09),
+		inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 20px 44px rgba(0, 0, 0, 0.55);
+	--shadow-pop:
+		0 0 0 1px rgba(255, 255, 255, 0.1), 0 24px 50px rgba(0, 0, 0, 0.6);
+	--shadow-accent: 0 6px 16px rgba(255, 106, 61, 0.35);
+
+	--mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+	--sans: Manrope, system-ui, -apple-system, sans-serif;
+
+	color-scheme: dark;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	height: 100%;
+}
+
+body {
+	background: var(--bg);
+	color: var(--ink);
+	font-family: var(--sans);
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+}
+
+::selection {
+	background: rgba(255, 106, 61, 0.3);
+}
+
+/* Shared primitives */
+.mono {
+	font-family: var(--mono);
+	font-variant-numeric: tabular-nums;
+}
+.eyebrow {
+	font: 600 10.5px / 1 var(--sans);
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--faint);
+}
+
+/* Buttons */
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	height: 36px;
+	padding: 0 15px;
+	border: 1px solid transparent;
+	border-radius: var(--r);
+	font: 600 12.5px / 1 var(--sans);
+	cursor: pointer;
+	white-space: nowrap;
+	transition:
+		background 0.14s ease,
+		box-shadow 0.14s ease,
+		opacity 0.14s ease;
+	background: var(--fill);
+	color: var(--ink-2);
+}
+.btn:hover {
+	background: rgba(255, 255, 255, 0.1);
+}
+.btn:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+.btn-primary {
+	background: var(--accent);
+	color: var(--accent-ink);
+	font-weight: 700;
+	box-shadow: var(--shadow-accent);
+}
+.btn-primary:hover:not(:disabled) {
+	background: var(--accent-soft);
+}
+.btn-primary:active {
+	background: var(--accent-press);
+}
+.btn-ghost {
+	background: transparent;
+	color: var(--muted);
+}
+.btn-ghost:hover {
+	background: var(--fill);
+}
+.btn-danger {
+	background: var(--error-wash);
+	color: var(--error);
+}
+.btn-danger:hover:not(:disabled) {
+	background: rgba(244, 63, 94, 0.22);
+}
+
+/* Inputs */
+.field {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	height: 42px;
+	padding: 0 13px;
+	border-radius: var(--r-md);
+	background: var(--void);
+	border: 1px solid var(--line-2);
+	color: var(--ink);
+	font: 500 13px / 1 var(--sans);
+}
+.field input {
+	flex: 1;
+	min-width: 0;
+	background: none;
+	border: none;
+	outline: none;
+	color: inherit;
+	font: inherit;
+}
+.field.mono input,
+.field input.mono {
+	font-family: var(--mono);
+}
+.field:focus-within {
+	border-color: var(--accent-ring);
+	box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.field input::placeholder {
+	color: var(--faint);
+}
+
+/* Status dot */
+.dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: var(--disabled);
+	flex: none;
+}
+.dot.online {
+	background: var(--online);
+	box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.18);
+}
+.dot.warn {
+	background: var(--warn);
+	box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.18);
+}
+.dot.error {
+	background: var(--error);
+	box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.18);
+}
+
+/* Toggle switch */
+.toggle {
+	width: 40px;
+	height: 23px;
+	border-radius: 999px;
+	background: var(--fill-2);
+	position: relative;
+	flex: none;
+	cursor: pointer;
+	border: none;
+	padding: 0;
+	transition: background 0.16s ease;
+}
+.toggle::after {
+	content: "";
+	position: absolute;
+	left: 3px;
+	top: 3px;
+	width: 17px;
+	height: 17px;
+	border-radius: 50%;
+	background: #79818c;
+	transition:
+		transform 0.16s ease,
+		background 0.16s ease;
+}
+.toggle[aria-checked="true"] {
+	background: var(--accent);
+	box-shadow: 0 0 0 4px var(--accent-glow);
+}
+.toggle[aria-checked="true"]::after {
+	transform: translateX(17px);
+	background: #fff;
+}
+
+/* Tag pill */
+.tag {
+	font: 500 10.5px / 1 var(--sans);
+	padding: 4px 7px;
+	border-radius: 6px;
+	background: var(--fill);
+	color: var(--muted);
+	white-space: nowrap;
+}
+.tag.build {
+	background: var(--accent-wash);
+	color: var(--accent-tint);
+}
+.tag.lab {
+	background: var(--online-wash);
+	color: var(--online-soft);
+}
+.tag.qa {
+	background: var(--warn-wash);
+	color: var(--warn-soft);
+}

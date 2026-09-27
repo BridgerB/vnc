@@ -1,0 +1,12 @@
+{
+	"name": "relay-stream-server",
+	"private": true,
+	"type": "module",
+	"description": "Relay stream server (runs on the wlroots box): wf-recorder -> h264_nvenc -> wss -> WebCodecs",
+	"scripts": {
+		"start": "node index.ts"
+	},
+	"dependencies": {
+		"ws": "^8.18.0"
+	}
+}
