@@ -1,8 +1,8 @@
-import crypto from "node:crypto";
 import { EventEmitter } from "node:events";
 import net from "node:net";
 import { Inflate } from "pako";
 import { decodeCursor, decodeRaw, decodeZrle } from "./decoders.ts";
+import { desEncryptBlock } from "./des.ts";
 
 const Z_SYNC_FLUSH = 2;
 
@@ -659,24 +659,25 @@ export class RfbClient extends EventEmitter {
 /**
  * VNC Authentication: DES-encrypt the 16-byte challenge with the password as the
  * key. Each key byte's bits are reversed (a quirk of the original VNC code).
+ * Only the first 8 characters of the password are used (the DES key size).
+ * Exported for unit testing.
  */
-const vncEncryptChallenge = (password: string, challenge: Buffer): Buffer => {
+export const vncEncryptChallenge = (
+	password: string,
+	challenge: Buffer,
+): Buffer => {
 	const key = Buffer.alloc(8);
 	for (let i = 0; i < 8; i++) key[i] = reverseBits(password.charCodeAt(i) || 0);
 	const out = Buffer.alloc(16);
 	for (let off = 0; off < 16; off += 8) {
-		const cipher = crypto.createCipheriv("des-ecb", key, null);
-		cipher.setAutoPadding(false);
-		const block = Buffer.concat([
-			cipher.update(challenge.subarray(off, off + 8)),
-			cipher.final(),
-		]);
-		block.copy(out, off);
+		const block = desEncryptBlock(key, challenge.subarray(off, off + 8));
+		Buffer.from(block.buffer, block.byteOffset, block.length).copy(out, off);
 	}
 	return out;
 };
 
-const reverseBits = (b: number): number => {
+/** Reverse the 8 bits of a byte (exported for unit testing). */
+export const reverseBits = (b: number): number => {
 	let r = 0;
 	for (let i = 0; i < 8; i++) r |= ((b >> i) & 1) << (7 - i);
 	return r & 0xff;
