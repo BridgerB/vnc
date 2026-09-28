@@ -4,7 +4,7 @@
 // first-appearance. Resolution is capture-bounded (~1/framerate) — report
 // distributions and treat as RELATIVE across clients, not absolute glass-to-glass.
 
-import { execFileSync, spawn } from "node:child_process";
+import { spawn } from "node:child_process";
 import fs from "node:fs";
 import { performance } from "node:perf_hooks";
 
@@ -67,9 +67,10 @@ ff.on("error", (e) => {
 	process.exit(0); // don't fail the whole run; record N/A
 });
 
-const setServer = (color) =>
-	execFileSync("xsetroot", ["-solid", color], {
+const flip = (color) =>
+	spawn("xsetroot", ["-solid", color], {
 		env: { ...process.env, DISPLAY: serverDisplay },
+		stdio: "ignore",
 	});
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -92,14 +93,18 @@ const waitBrightness = (want) =>
 
 const run = async () => {
 	await sleep(600); // let ffmpeg attach
-	setServer(DARK);
+	flip(DARK);
 	await waitBrightness("dark");
+	await sleep(300);
 
 	const samples = [];
 	for (let i = 0; i < reps; i++) {
 		const toLight = i % 2 === 0;
-		setServer(toLight ? LIGHT : DARK);
+		// Start the clock, THEN fire the flip async so the pixel stream keeps
+		// draining while it applies — otherwise a fast client transitions during a
+		// blocking call and reads ~0ms.
 		const t0 = performance.now();
+		flip(toLight ? LIGHT : DARK);
 		const got = await waitBrightness(toLight ? "light" : "dark");
 		const t1 = performance.now();
 		if (got) samples.push(t1 - t0);

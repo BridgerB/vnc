@@ -8,6 +8,10 @@ VNC_PORT=5900
 RESULTS="${RESULTS:-bench/results}"
 METRICS="$RESULTS/metrics.csv"
 
+# Packet capture needs root; use sudo only when we aren't already root (GitHub
+# runners are non-root + passwordless sudo; a Docker container is root, no sudo).
+if [ "$(id -u)" -eq 0 ]; then SUDO=""; else SUDO="sudo"; fi
+
 log() { echo "[bench] $*" >&2; }
 
 csv_init() {
@@ -33,12 +37,12 @@ wait_port() {
 # --- server (one fixed x11vnc on its own Xvfb) ---------------------------
 start_server() {
 	log "starting Xvfb $SERVER_DISPLAY + x11vnc :$VNC_PORT"
-	Xvfb "$SERVER_DISPLAY" -screen 0 "$SERVER_GEOM" -nolisten tcp &
+	Xvfb "$SERVER_DISPLAY" -screen 0 "$SERVER_GEOM" -nolisten tcp >"$RESULTS/xvfb-server.log" 2>&1 &
 	SERVER_XVFB_PID=$!
 	sleep 2
 	DISPLAY="$SERVER_DISPLAY" xsetroot -solid "#202020" || true
 	x11vnc -display "$SERVER_DISPLAY" -rfbport "$VNC_PORT" -localhost -nopw \
-		-forever -shared -quiet -noxdamage -ncache 0 &
+		-forever -shared -quiet -noxdamage -ncache 0 >"$RESULTS/x11vnc.log" 2>&1 &
 	SERVER_X11VNC_PID=$!
 	wait_port 127.0.0.1 "$VNC_PORT" 30 || {
 		log "x11vnc did not open :$VNC_PORT"
@@ -51,9 +55,10 @@ stop_server() {
 }
 
 # --- per-client virtual display -----------------------------------------
-start_display() { # <:N>
-	Xvfb "$1" -screen 0 "$SERVER_GEOM" -nolisten tcp &
-	echo $! # caller captures the Xvfb pid
+start_display() { # <:N>  — prints the Xvfb pid. Redirect Xvfb's fds so it does
+	# not hold the command-substitution pipe open (which would hang $(start_display)).
+	Xvfb "$1" -screen 0 "$SERVER_GEOM" -nolisten tcp >/dev/null 2>&1 &
+	echo $!
 	sleep 1.5
 }
 
@@ -80,14 +85,14 @@ sample_tree() {
 
 # --- bandwidth (RFB bytes on loopback) ----------------------------------
 tcpdump_start() { # <pcap-path> <port>
-	sudo tcpdump -i lo -w "$1" -s 96 "tcp port $2" >/dev/null 2>&1 &
+	$SUDO tcpdump -i lo -w "$1" -s 96 "tcp port $2" >/dev/null 2>&1 &
 	echo $!
 }
 tcpdump_bytes() { # <pcap-path> -> total on-wire bytes (both directions)
 	# frame.len is the original wire length even with a small snaplen, so summing
 	# it gives true bandwidth; fall back to pcap file size if tshark is absent.
 	if command -v tshark >/dev/null 2>&1; then
-		sudo tshark -r "$1" -T fields -e frame.len 2>/dev/null |
+		$SUDO tshark -r "$1" -T fields -e frame.len 2>/dev/null |
 			awk '{s+=$1} END {print s+0}'
 	else
 		stat -c%s "$1" 2>/dev/null || echo 0

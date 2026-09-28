@@ -13,6 +13,12 @@ const browser = await chromium.launch({
 	args: [
 		"--no-sandbox",
 		"--disable-gpu",
+		"--disable-dev-shm-usage",
+		// Keep the renderer running full-speed — headless/kiosk on a GPU-less
+		// runner otherwise throttles or backgrounds it and the session stalls.
+		"--disable-background-timer-throttling",
+		"--disable-backgrounding-occluded-windows",
+		"--disable-renderer-backgrounding",
 		"--kiosk",
 		"--window-position=0,0",
 		"--window-size=1280,720",

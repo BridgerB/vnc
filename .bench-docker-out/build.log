@@ -1,0 +1,65 @@
+
+> vnc@0.1.0 build
+> vite build
+
+vite v8.2.2 building ssr environment for production...
+transforming...
+✓ 172 modules transformed.
+rendering chunks...
+vite v8.2.2 building client environment for production...
+transforming...
+✓ 180 modules transformed.
+rendering chunks...
+computing gzip size...
+.svelte-kit/output/client/_app/version.json                        0.02 kB │ gzip:  0.04 kB
+.svelte-kit/output/client/.vite/manifest.json                      2.41 kB │ gzip:  0.51 kB
+.svelte-kit/output/client/_app/immutable/assets/0.DW1Nr-U9.css     3.91 kB │ gzip:  1.49 kB
+.svelte-kit/output/client/_app/immutable/assets/2.ThA-4mIW.css    24.18 kB │ gzip:  4.65 kB
+.svelte-kit/output/client/_app/immutable/chunks/xihTtKlq.js        0.06 kB │ gzip:  0.08 kB
+.svelte-kit/output/client/_app/immutable/entry/start.CwOElwBN.js   0.07 kB │ gzip:  0.08 kB
+.svelte-kit/output/client/_app/immutable/nodes/1.DdE2TE-r.js       0.57 kB │ gzip:  0.32 kB
+.svelte-kit/output/client/_app/immutable/chunks/Bjy-W4x2.js        1.36 kB │ gzip:  0.65 kB
+.svelte-kit/output/client/_app/immutable/nodes/0.K6sjQ0KX.js       3.44 kB │ gzip:  1.11 kB
+.svelte-kit/output/client/_app/immutable/entry/app.nx7F14XF.js     4.00 kB │ gzip:  1.87 kB
+.svelte-kit/output/client/_app/immutable/chunks/DH_xidHw.js       26.64 kB │ gzip: 10.29 kB
+.svelte-kit/output/client/_app/immutable/chunks/BvNuhg_W.js       46.73 kB │ gzip: 17.97 kB
+.svelte-kit/output/client/_app/immutable/nodes/2.BTMyWeC8.js      49.52 kB │ gzip: 16.50 kB
+
+✓ built in 912ms
+computing gzip size...
+.svelte-kit/output/server/.vite/manifest.json                           3.24 kB │ gzip:  0.59 kB
+.svelte-kit/output/server/_app/immutable/assets/_layout.DQ1YeU04.css    3.85 kB │ gzip:  1.47 kB
+.svelte-kit/output/server/_app/immutable/assets/_page.DgSCEvby.css     24.23 kB │ gzip:  4.65 kB
+.svelte-kit/output/server/env.js                                        0.22 kB │ gzip:  0.14 kB
+.svelte-kit/output/server/chunks/env.js                                 0.28 kB │ gzip:  0.17 kB
+.svelte-kit/output/server/internal.js                                   0.40 kB │ gzip:  0.19 kB
+.svelte-kit/output/server/chunks/internal.js                            0.74 kB │ gzip:  0.34 kB
+.svelte-kit/output/server/entries/endpoints/api/ping/_server.ts.js      2.33 kB │ gzip:  1.14 kB
+.svelte-kit/output/server/entries/pages/_layout.svelte.js               3.56 kB │ gzip:  1.11 kB
+.svelte-kit/output/server/entries/fallbacks/error.svelte.js             4.21 kB │ gzip:  1.66 kB
+.svelte-kit/output/server/chunks/index-server.js                        4.83 kB │ gzip:  1.77 kB
+.svelte-kit/output/server/chunks/exports.js                             9.01 kB │ gzip:  2.96 kB
+.svelte-kit/output/server/chunks/shared.js                             10.57 kB │ gzip:  3.38 kB
+.svelte-kit/output/server/chunks/utils.js                              31.77 kB │ gzip:  9.35 kB
+.svelte-kit/output/server/chunks/internal2.js                          35.80 kB │ gzip: 10.29 kB
+.svelte-kit/output/server/entries/pages/_page.svelte.js                46.69 kB │ gzip: 11.24 kB
+.svelte-kit/output/server/remote-entry.js                              54.49 kB │ gzip: 12.02 kB
+.svelte-kit/output/server/chunks/server.js                            120.11 kB │ gzip: 31.44 kB
+.svelte-kit/output/server/index.js                                    126.05 kB │ gzip: 31.92 kB
+
+✓ built in 8.58s
+
+Run npm run preview to preview your production build locally.
+
+> Using @sveltejs/adapter-node
+Generated an empty chunk: "chunks/env.js".
+  ✔ done
+[33m[PLUGIN_TIMINGS] [0mYour build spent 100% of 8.5s inside plugin hooks (9.9s).
+Measured inside the callback, so queue time is excluded and time the callback itself awaited is not:
+  - vite-plugin-sveltekit-compile writeBundle (77%, 6.6s, 1 call)
+  - vite-plugin-sveltekit-compile closeBundle (24%, 2.1s, 1 call)
+Those rows are 100% of the build; the rest of the 100% is below.
+Not measurable — 1 hook whose calls overlap, so elapsed time covers work other calls were doing. Profile with `node --cpu-prof`:
+  - vite-plugin-sveltekit-guard resolveId (665 calls)
+See https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.
+

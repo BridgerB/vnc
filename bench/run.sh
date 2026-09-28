@@ -43,7 +43,8 @@ run_client() {
 	local t0 t1
 	t0=$(date +%s.%N)
 	if [ "$ready" = "grep" ]; then
-		for _ in $(seq 1 80); do grep -q READY "$clog" 2>/dev/null && break; sleep 0.5; done
+		# Chromium first paint is slow on a GPU-less runner; give it up to 120s.
+		for _ in $(seq 1 240); do grep -q READY "$clog" 2>/dev/null && break; sleep 0.5; done
 	else
 		sleep 8
 	fi
@@ -71,8 +72,8 @@ run_client() {
 	td=$(tcpdump_start "$pcap" "$VNC_PORT")
 	sleep 0.5
 	sample_tree "$name" motion "$leader" "$DURATION"
-	sudo kill "$td" 2>/dev/null || true
-	sleep 0.5
+	$SUDO kill "$td" 2>/dev/null || true
+	sleep 1
 	stop_motion "$motion"
 	csv_add "$name" motion rfb_bytes "$(tcpdump_bytes "$pcap")" bytes
 
