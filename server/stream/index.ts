@@ -18,16 +18,14 @@
  *   WAYLAND_DISPLAY=wayland-1
  *   XDG_RUNTIME_DIR=/run/user/1000
  *   BITRATE=40M  GOP=120  PRESET=p1
- *   PYTHON=python3            interpreter for the uinput helper (Nix: set PYENV
- *                             to a python env dir, or PYTHON to its python3)
- *   INJECT=<path>             override path to inject.py (default: next to this)
+ *
+ * Input is injected in-process via Linux uinput (see uinput.ts) — no Python.
  */
 
 import { type ChildProcess, spawn } from "node:child_process";
 import http from "node:http";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { type WebSocket, WebSocketServer } from "ws";
+import { createUinput, type Uinput } from "./uinput.ts";
 
 // ---- data ----------------------------------------------------------------
 
@@ -41,8 +39,6 @@ type Config = {
 	bitrate: string;
 	gop: string;
 	preset: string;
-	python: string;
-	injectPath: string;
 };
 
 /** One decoded H.264 access unit (a whole frame), ready to send. */
@@ -63,7 +59,7 @@ const assertNever = (x: never): never => {
 	throw new Error(`unreachable: ${JSON.stringify(x)}`);
 };
 
-// ---- pure: input parsing + command mapping -------------------------------
+// ---- pure: input parsing -------------------------------------------------
 
 const toInt = (v: unknown) => (typeof v === "number" ? v | 0 : 0);
 
@@ -84,28 +80,6 @@ const parseInput = (raw: unknown): InputMsg | null => {
 			return { t: "key", code: toInt(m.code), down: !!m.down };
 		default:
 			return null;
-	}
-};
-
-/** Map an input message to the line(s) the uinput helper reads on stdin. */
-const toCommands = (m: InputMsg): string[] => {
-	switch (m.t) {
-		case "a":
-			return [`a ${m.x} ${m.y}`];
-		case "m":
-			return [`m ${m.dx} ${m.dy}`];
-		case "btn":
-			return [`${m.down ? "d" : "u"} ${m.b}`];
-		case "wheel": {
-			const lines: string[] = [];
-			if (m.dy) lines.push(`w ${m.dy}`);
-			if (m.dx) lines.push(`hw ${m.dx}`);
-			return lines;
-		}
-		case "key":
-			return [`${m.down ? "kd" : "ku"} ${m.code}`];
-		default:
-			return assertNever(m);
 	}
 };
 
@@ -254,8 +228,6 @@ const captureArgs = (cfg: Config): string[] => [
 
 // ---- effects -------------------------------------------------------------
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-
 const readConfig = (env: NodeJS.ProcessEnv): Config => ({
 	port: Number(env.PORT ?? 4735),
 	host: env.HOST ?? "0.0.0.0",
@@ -265,8 +237,6 @@ const readConfig = (env: NodeJS.ProcessEnv): Config => ({
 	bitrate: env.BITRATE ?? "40M",
 	gop: env.GOP ?? "120",
 	preset: env.PRESET ?? "p1", // p1 = fastest encode = lowest latency
-	python: env.PYTHON ?? (env.PYENV ? `${env.PYENV}/bin/python3` : "python3"),
-	injectPath: env.INJECT ?? path.join(here, "inject.py"),
 });
 
 /** Spawn wf-recorder; raw stdout goes to `onData`, exit to `onExit`. */
@@ -296,36 +266,25 @@ const startCapture = (
 	return child;
 };
 
-/** A persistent uinput helper process; held keys stay held (no per-event spawn). */
-type Injector = { send: (line: string) => void };
-
-const startInjector = (cfg: Config): Injector => {
-	let proc: ChildProcess | null = null;
-	const spawnHelper = () => {
-		proc = spawn(cfg.python, [cfg.injectPath], {
-			env: {
-				...process.env,
-				WAYLAND_DISPLAY: cfg.waylandDisplay,
-				XDG_RUNTIME_DIR: cfg.xdgRuntimeDir,
-			},
-			stdio: ["pipe", "ignore", "pipe"],
-		});
-		proc.stderr?.on("data", (d: Buffer) =>
-			console.log("[input]", d.toString().trim()),
-		);
-		proc.on("exit", (code) => {
-			console.log("[input] helper exited", code, "— restarting");
-			proc = null;
-			setTimeout(spawnHelper, 500);
-		});
-	};
-	spawnHelper();
-	return {
-		send: (line) => {
-			const stdin = proc?.stdin;
-			if (stdin?.writable) stdin.write(`${line}\n`);
-		},
-	};
+/** Inject one parsed input message into the virtual device. */
+const injectInput = (ui: Uinput, m: InputMsg) => {
+	switch (m.t) {
+		case "a":
+			return ui.moveAbs(m.x, m.y);
+		case "m":
+			return ui.moveRel(m.dx, m.dy);
+		case "btn":
+			return ui.button(m.b, m.down);
+		case "wheel": {
+			if (m.dy) ui.wheel(m.dy);
+			if (m.dx) ui.hwheel(m.dx);
+			return;
+		}
+		case "key":
+			return ui.key(m.code, m.down);
+		default:
+			return assertNever(m);
+	}
 };
 
 /**
@@ -397,8 +356,13 @@ const startBroadcaster = (cfg: Config): Broadcaster => {
 
 const main = () => {
 	const cfg = readConfig(process.env);
-	const injector = startInjector(cfg);
+	const ui = createUinput();
 	const broadcaster = startBroadcaster(cfg);
+	for (const sig of ["SIGINT", "SIGTERM"] as const)
+		process.on(sig, () => {
+			ui.destroy();
+			process.exit(0);
+		});
 
 	const server = http.createServer((_req, res) => {
 		res.writeHead(200, { "content-type": "text/plain" });
@@ -412,7 +376,7 @@ const main = () => {
 			if (isBinary) return;
 			try {
 				const msg = parseInput(JSON.parse(raw.toString()));
-				if (msg) for (const line of toCommands(msg)) injector.send(line);
+				if (msg) injectInput(ui, msg);
 			} catch {
 				/* malformed frame — ignore */
 			}
