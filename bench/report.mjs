@@ -114,7 +114,7 @@ if (gnuplotAvailable) {
 		"MB",
 		CLIENTS.map((c) => [c, bytesToMb(get(c, "motion.rfb_bytes"))]),
 	);
-	process.stderr.write("[report] wrote charts to " + results + "\n");
+	process.stderr.write(`[report] wrote charts to ${results}\n`);
 } else {
 	process.stderr.write("[report] gnuplot not found; skipping charts\n");
 }

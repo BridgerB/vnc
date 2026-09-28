@@ -10,7 +10,9 @@ const TARGET = process.env.RELAY_TARGET ?? "127.0.0.1:5900";
 
 const t0 = Date.now();
 const step = (m) =>
-	console.error(`[relay-drive] ${m} +${((Date.now() - t0) / 1000).toFixed(1)}s`);
+	console.error(
+		`[relay-drive] ${m} +${((Date.now() - t0) / 1000).toFixed(1)}s`,
+	);
 
 const browser = await chromium.launch({
 	headless: false,
