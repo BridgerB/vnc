@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+      - name: Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      # Lint, typecheck, and unit/component tests inside the dev shell (Node +
+      # nix-provided Playwright browsers via PLAYWRIGHT_BROWSERS_PATH).
+      - name: Lint / typecheck / unit
+        run: |
+          nix develop --command bash -c '
+            npm ci &&
+            npm run lint &&
+            npm run check &&
+            npm run test:unit -- --run
+          '
+
+      # End-to-end against the in-process mock servers (always-on).
+      - name: E2E (mock)
+        run: nix develop --command bash -c 'CI=1 npx playwright test'
+
+      # End-to-end against a real x11vnc + Xvfb server.
+      - name: E2E (real x11vnc)
+        run: nix run .#e2e-real
