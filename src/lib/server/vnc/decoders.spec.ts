@@ -127,4 +127,57 @@ describe("decodeZrle", () => {
 		expect(() => decodeZrle(Buffer.from([17]), 2, 2)).toThrow();
 		expect(() => decodeZrle(Buffer.from([129]), 2, 2)).toThrow();
 	});
+
+	// The 64x64 tile grid means real frames have interior tiles at tx/ty > 0 and
+	// smaller edge tiles, so the row stride between output rows is nonzero — a
+	// case the small single-tile cases above never exercise. 130x70 gives a 3x2
+	// grid of tile widths [64,64,2] x heights [64,6].
+	const W = 130;
+	const H = 70;
+	const colourFor = (tileX: number, tileY: number) => [
+		(tileX * 40 + 10) & 255,
+		(tileY * 50 + 20) & 255,
+		((tileX + tileY) * 30 + 5) & 255,
+	];
+	// Reference framebuffer: every pixel is its tile's colour.
+	const expected = (): number[][] => {
+		const rows: number[][] = [];
+		for (let y = 0; y < H; y++)
+			for (let x = 0; x < W; x++)
+				rows.push([...colourFor((x / 64) | 0, (y / 64) | 0), 255]);
+		return rows;
+	};
+	const assertMatches = (out: Buffer) => {
+		const want = expected();
+		for (let y = 0; y < H; y++)
+			for (let x = 0; x < W; x++)
+				expect(px(out, W, x, y)).toEqual(want[y * W + x]);
+	};
+
+	it("places multi-tile SOLID tiles at the right offsets (nonzero row stride, edge tiles)", () => {
+		const bytes: number[] = [];
+		for (let ty = 0; ty < H; ty += 64)
+			for (let tx = 0; tx < W; tx += 64)
+				bytes.push(1, ...colourFor(tx / 64, ty / 64));
+		assertMatches(decodeZrle(Buffer.from(bytes), W, H));
+	});
+
+	it("advances plain-RLE runs across tile rows and edge tiles correctly", () => {
+		const bytes: number[] = [];
+		for (let ty = 0; ty < H; ty += 64) {
+			const th = Math.min(64, H - ty);
+			for (let tx = 0; tx < W; tx += 64) {
+				const tw = Math.min(64, W - tx);
+				bytes.push(128, ...colourFor(tx / 64, ty / 64));
+				// Encode one run covering the whole tile (run length = tw*th).
+				let run = tw * th - 1;
+				while (run >= 255) {
+					bytes.push(255);
+					run -= 255;
+				}
+				bytes.push(run);
+			}
+		}
+		assertMatches(decodeZrle(Buffer.from(bytes), W, H));
+	});
 });

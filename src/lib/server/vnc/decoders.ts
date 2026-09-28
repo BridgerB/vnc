@@ -7,32 +7,14 @@
  * 3 significant bytes [R,G,B] (the top byte is always zero at depth 24).
  */
 
-type Rgb = [r: number, g: number, b: number];
-
 const ALPHA_OPAQUE = 255;
+const ALPHA_WORD = 0xff000000; // opaque alpha in the high byte of a little-endian RGBA word
 const TILE = 64; // ZRLE tiles are 64x64
 const SUB_RAW = 0;
 const SUB_SOLID = 1;
 const SUB_PACKED_MAX = 16; // subencodings 2..16 are packed palettes of that size
 const SUB_PLAIN_RLE = 128;
 const SUB_PALETTE_RLE_MIN = 130; // 130.. are palette RLE (palette size = sub - 128)
-
-/** Write one RGBA pixel into `out` (row stride `W` pixels) at (x, y). */
-const setPixel = (
-	out: Uint8Array,
-	W: number,
-	x: number,
-	y: number,
-	r: number,
-	g: number,
-	b: number,
-) => {
-	const off = (y * W + x) * 4;
-	out[off] = r;
-	out[off + 1] = g;
-	out[off + 2] = b;
-	out[off + 3] = ALPHA_OPAQUE;
-};
 
 /** Decode a Raw rectangle (already RGBX on the wire) to RGBA. */
 export const decodeRaw = (src: Buffer, w: number, h: number): Buffer => {
@@ -43,47 +25,52 @@ export const decodeRaw = (src: Buffer, w: number, h: number): Buffer => {
 
 /** Decode a ZRLE rectangle from its already-decompressed byte stream. */
 export const decodeZrle = (data: Buffer, W: number, H: number): Buffer => {
-	const out = Buffer.alloc(W * H * 4);
+	// Write whole RGBA pixels as single 32-bit stores through a Uint32 view — far
+	// cheaper than four byte writes. This assumes a little-endian host (byte order
+	// R,G,B,A within the word), matching the negotiated pixel format's endianness.
+	const out = new Uint8Array(W * H * 4);
+	const out32 = new Uint32Array(out.buffer);
 	let p = 0;
 
-	const readCPixel = (): Rgb => {
-		const rgb: Rgb = [data[p], data[p + 1], data[p + 2]];
-		p += 3;
-		return rgb;
-	};
-	const readRunLength = () => {
-		let run = 1;
-		let b: number;
-		do {
-			b = data[p++];
-			run += b;
-		} while (b === 0xff);
-		return run;
-	};
-
+	// NB: no closures capture `p` — keeping it a plain local lets V8 hold it in a
+	// register instead of a heap context object, which dominates this hot loop.
 	for (let ty = 0; ty < H; ty += TILE) {
 		const th = Math.min(TILE, H - ty);
 		for (let tx = 0; tx < W; tx += TILE) {
 			const tw = Math.min(TILE, W - tx);
 			const nPix = tw * th;
+			const rowStep = W - tw; // out32 gap from a tile row's end to the next row
 			const sub = data[p++];
 
 			if (sub === SUB_RAW) {
-				for (let j = 0; j < th; j++)
+				let idx = ty * W + tx;
+				for (let j = 0; j < th; j++) {
 					for (let i = 0; i < tw; i++) {
-						const [r, g, b] = readCPixel();
-						setPixel(out, W, tx + i, ty + j, r, g, b);
+						out32[idx++] =
+							data[p] | (data[p + 1] << 8) | (data[p + 2] << 16) | ALPHA_WORD;
+						p += 3;
 					}
+					idx += rowStep;
+				}
 			} else if (sub === SUB_SOLID) {
-				const [r, g, b] = readCPixel();
-				for (let j = 0; j < th; j++)
-					for (let i = 0; i < tw; i++)
-						setPixel(out, W, tx + i, ty + j, r, g, b);
+				const px =
+					data[p] | (data[p + 1] << 8) | (data[p + 2] << 16) | ALPHA_WORD;
+				p += 3;
+				let idx = ty * W + tx;
+				for (let j = 0; j < th; j++) {
+					for (let i = 0; i < tw; i++) out32[idx++] = px;
+					idx += rowStep;
+				}
 			} else if (sub >= 2 && sub <= SUB_PACKED_MAX) {
-				const palette: Rgb[] = [];
-				for (let k = 0; k < sub; k++) palette.push(readCPixel());
+				const palette = new Uint32Array(sub);
+				for (let k = 0; k < sub; k++) {
+					palette[k] =
+						data[p] | (data[p + 1] << 8) | (data[p + 2] << 16) | ALPHA_WORD;
+					p += 3;
+				}
 				const bpp = sub <= 2 ? 1 : sub <= 4 ? 2 : 4;
 				const mask = (1 << bpp) - 1;
+				let idx = ty * W + tx;
 				for (let j = 0; j < th; j++) {
 					let cur = 0;
 					let bits = 0;
@@ -93,38 +80,68 @@ export const decodeZrle = (data: Buffer, W: number, H: number): Buffer => {
 							bits = 8;
 						}
 						bits -= bpp;
-						const [r, g, b] = palette[(cur >> bits) & mask];
-						setPixel(out, W, tx + i, ty + j, r, g, b);
+						out32[idx++] = palette[(cur >> bits) & mask];
 					}
+					idx += rowStep;
 					// Each row is padded to a byte boundary (leftover bits dropped).
 				}
 			} else if (sub === SUB_PLAIN_RLE) {
+				let idx = ty * W + tx;
+				let rx = 0;
 				let ti = 0;
 				while (ti < nPix) {
-					const [r, g, b] = readCPixel();
-					let run = readRunLength();
+					const px =
+						data[p] | (data[p + 1] << 8) | (data[p + 2] << 16) | ALPHA_WORD;
+					p += 3;
+					let run = 1;
+					let b: number;
+					do {
+						b = data[p++];
+						run += b;
+					} while (b === 0xff);
 					while (run-- > 0 && ti < nPix) {
-						setPixel(out, W, tx + (ti % tw), ty + ((ti / tw) | 0), r, g, b);
+						out32[idx++] = px;
 						ti++;
+						if (++rx === tw) {
+							rx = 0;
+							idx += rowStep;
+						}
 					}
 				}
 			} else if (sub >= SUB_PALETTE_RLE_MIN) {
-				const palette: Rgb[] = [];
-				for (let k = 0; k < sub - 128; k++) palette.push(readCPixel());
+				const palette = new Uint32Array(sub - 128);
+				for (let k = 0; k < sub - 128; k++) {
+					palette[k] =
+						data[p] | (data[p + 1] << 8) | (data[p + 2] << 16) | ALPHA_WORD;
+					p += 3;
+				}
+				let idx = ty * W + tx;
+				let rx = 0;
 				let ti = 0;
 				while (ti < nPix) {
-					let idx = data[p++];
-					if (idx < 128) {
-						const [r, g, b] = palette[idx];
-						setPixel(out, W, tx + (ti % tw), ty + ((ti / tw) | 0), r, g, b);
+					const index = data[p++];
+					if (index < 128) {
+						out32[idx++] = palette[index];
 						ti++;
+						if (++rx === tw) {
+							rx = 0;
+							idx += rowStep;
+						}
 					} else {
-						idx -= 128;
-						const [r, g, b] = palette[idx];
-						let run = readRunLength();
+						const px = palette[index - 128];
+						let run = 1;
+						let b: number;
+						do {
+							b = data[p++];
+							run += b;
+						} while (b === 0xff);
 						while (run-- > 0 && ti < nPix) {
-							setPixel(out, W, tx + (ti % tw), ty + ((ti / tw) | 0), r, g, b);
+							out32[idx++] = px;
 							ti++;
+							if (++rx === tw) {
+								rx = 0;
+								idx += rowStep;
+							}
 						}
 					}
 				}
@@ -133,7 +150,7 @@ export const decodeZrle = (data: Buffer, W: number, H: number): Buffer => {
 			}
 		}
 	}
-	return out;
+	return Buffer.from(out.buffer, out.byteOffset, out.byteLength);
 };
 
 /** Decode a Cursor pseudo-encoding body (w*h*4 pixels + a 1bpp mask) into RGBA. */
