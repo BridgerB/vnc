@@ -27,7 +27,8 @@
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run && npm run test:e2e",
 		"test:e2e": "playwright install && playwright test",
-		"test:e2e:real": "playwright test tests/dashboard.e2e.ts tests/vnc-session.e2e.ts"
+		"test:e2e:real": "playwright test tests/dashboard.e2e.ts tests/vnc-session.e2e.ts",
+		"bench": "bash bench/run.sh"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.11",

@@ -1,0 +1,71 @@
+name: Benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      duration:
+        description: "Motion workload seconds per client"
+        default: "20"
+      reps:
+        description: "Latency repetitions per client"
+        default: "30"
+      pr_number:
+        description: "PR number to comment results on (optional)"
+        default: ""
+
+concurrency:
+  group: benchmark
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: playwright-${{ runner.os }}-
+      - run: npx playwright install --with-deps chromium
+
+      - name: Install VNC clients + measurement tools
+        run: |
+          echo "wireshark-common wireshark-common/install-setuid boolean false" \
+            | sudo debconf-set-selections
+          sudo DEBIAN_FRONTEND=noninteractive apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            xvfb x11vnc tigervnc-viewer remmina remmina-plugin-vnc \
+            tcpdump tshark ffmpeg gnuplot x11-xserver-utils openbox dbus-x11
+
+      - name: Run benchmark
+        run: DURATION="${{ inputs.duration }}" REPS="${{ inputs.reps }}" bash bench/run.sh
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: |
+            bench/results/*.csv
+            bench/results/*.png
+            bench/results/report.md
+            bench/results/*.log
+
+      - name: Comment on PR
+        if: ${{ inputs.pr_number != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr comment "${{ inputs.pr_number }}" --body-file bench/results/report.md
