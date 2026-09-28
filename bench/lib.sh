@@ -14,6 +14,25 @@ if [ "$(id -u)" -eq 0 ]; then SUDO=""; else SUDO="sudo"; fi
 
 log() { echo "[bench] $*" >&2; }
 
+# Free an X display number: kill any owner and remove stale lock/socket so a
+# fresh Xvfb can claim it (locks persist in the container FS across restarts).
+free_display() { # <N> (number, no colon)
+	pkill -f "Xvfb :$1( |$)" 2>/dev/null || true
+	rm -f "/tmp/.X$1-lock" "/tmp/.X11-unix/X$1" 2>/dev/null || true
+}
+
+# Kill leftovers from a previous run so each run starts from a clean slate.
+cleanup_stale() {
+	pkill -f "vite preview" 2>/dev/null || true
+	pkill -f x11vnc 2>/dev/null || true
+	pkill -f xtigervncviewer 2>/dev/null || true
+	pkill -f "remmina" 2>/dev/null || true
+	pkill -f "ffplay" 2>/dev/null || true
+	pkill -f "chrome" 2>/dev/null || true
+	for n in 99 101 102 103; do free_display "$n"; done
+	sleep 1
+}
+
 csv_init() {
 	mkdir -p "$RESULTS"
 	echo "client,workload,metric,value,unit,note" >"$METRICS"
@@ -34,29 +53,34 @@ wait_port() {
 	return 0
 }
 
-# --- server (one fixed x11vnc on its own Xvfb) ---------------------------
+# --- server (TigerVNC Xvnc: X server + reference RFB server in one) -------
+# Using Xvnc (not x11vnc) so ContinuousUpdates — which Relay negotiates — is
+# actually honoured; x11vnc's push is weak and starves continuous-update clients
+# while polling viewers keep pulling, which would be an unfair confound.
 start_server() {
-	log "starting Xvfb $SERVER_DISPLAY + x11vnc :$VNC_PORT"
-	Xvfb "$SERVER_DISPLAY" -screen 0 "$SERVER_GEOM" -nolisten tcp >"$RESULTS/xvfb-server.log" 2>&1 &
-	SERVER_XVFB_PID=$!
-	sleep 2
-	DISPLAY="$SERVER_DISPLAY" xsetroot -solid "#202020" || true
-	x11vnc -display "$SERVER_DISPLAY" -rfbport "$VNC_PORT" -localhost -nopw \
-		-forever -shared -quiet -noxdamage -ncache 0 >"$RESULTS/x11vnc.log" 2>&1 &
-	SERVER_X11VNC_PID=$!
+	log "starting Xvnc $SERVER_DISPLAY (rfb :$VNC_PORT)"
+	free_display "${SERVER_DISPLAY#:}"
+	Xvnc "$SERVER_DISPLAY" -geometry 1280x720 -depth 24 -rfbport "$VNC_PORT" \
+		-SecurityTypes None -localhost -AlwaysShared -desktop bench \
+		>"$RESULTS/xvnc.log" 2>&1 &
+	SERVER_PID=$!
 	wait_port 127.0.0.1 "$VNC_PORT" 30 || {
-		log "x11vnc did not open :$VNC_PORT"
+		log "Xvnc did not open :$VNC_PORT"
+		tail -5 "$RESULTS/xvnc.log" >&2 2>/dev/null || true
 		return 1
 	}
+	sleep 1
+	DISPLAY="$SERVER_DISPLAY" xsetroot -solid "#202020" || true
 	log "server up"
 }
 stop_server() {
-	kill "$SERVER_X11VNC_PID" "$SERVER_XVFB_PID" 2>/dev/null || true
+	kill "$SERVER_PID" 2>/dev/null || true
 }
 
 # --- per-client virtual display -----------------------------------------
 start_display() { # <:N>  — prints the Xvfb pid. Redirect Xvfb's fds so it does
 	# not hold the command-substitution pipe open (which would hang $(start_display)).
+	free_display "${1#:}"
 	Xvfb "$1" -screen 0 "$SERVER_GEOM" -nolisten tcp >/dev/null 2>&1 &
 	echo $!
 	sleep 1.5

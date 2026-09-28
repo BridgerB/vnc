@@ -7,8 +7,10 @@ come off a neutral machine, not a dev laptop.
 
 ## How it works
 
-- One fixed server: `x11vnc` on an `Xvfb` display (`:99`, port 5900), so any
-  client-side differences are attributable to the client, not the server.
+- One fixed server: TigerVNC's `Xvnc` (`:99`, port 5900) — the reference RFB
+  server, and it honours ContinuousUpdates (which Relay negotiates), unlike
+  x11vnc whose weak push starves continuous-update clients and would be an unfair
+  confound. Any client-side differences are attributable to the client.
 - Each client runs **sequentially**, on its **own** Xvfb display, and connects to
   `127.0.0.1:5900`:
   - Relay — `vite preview` (Node bridge + RFB decode) + a headful Chromium tab

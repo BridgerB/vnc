@@ -47,7 +47,7 @@ jobs:
             | sudo debconf-set-selections
           sudo DEBIAN_FRONTEND=noninteractive apt-get update
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-            xvfb x11vnc tigervnc-viewer remmina remmina-plugin-vnc \
+            xvfb tigervnc-standalone-server tigervnc-viewer remmina remmina-plugin-vnc \
             tcpdump tshark ffmpeg gnuplot x11-xserver-utils openbox dbus-x11
 
       - name: Run benchmark

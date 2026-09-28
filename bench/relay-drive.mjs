@@ -8,6 +8,10 @@ import { chromium } from "playwright";
 const PREVIEW = process.env.RELAY_PREVIEW_URL ?? "http://localhost:4734";
 const TARGET = process.env.RELAY_TARGET ?? "127.0.0.1:5900";
 
+const t0 = Date.now();
+const step = (m) =>
+	console.error(`[relay-drive] ${m} +${((Date.now() - t0) / 1000).toFixed(1)}s`);
+
 const browser = await chromium.launch({
 	headless: false,
 	args: [
@@ -24,6 +28,7 @@ const browser = await chromium.launch({
 		"--window-size=1280,720",
 	],
 });
+step("browser launched");
 const page = await browser.newPage({ viewport: null });
 
 // Enable the stats HUD before the app loads.
@@ -36,9 +41,12 @@ await page.addInitScript(() => {
 });
 
 await page.goto(PREVIEW);
+step("goto preview");
 await page.getByPlaceholder("user@host:port").fill(TARGET);
 await page.getByRole("button", { name: "Quick connect" }).click();
-await page.locator("canvas").waitFor({ state: "visible", timeout: 30000 });
+step("submitted quick-connect");
+await page.locator("canvas").waitFor({ state: "visible", timeout: 60000 });
+step("canvas visible");
 console.log("READY");
 
 const shutdown = async () => {

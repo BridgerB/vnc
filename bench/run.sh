@@ -11,6 +11,7 @@ DURATION="${DURATION:-20}"
 REPS="${REPS:-30}"
 
 csv_init
+cleanup_stale
 start_server || {
 	log "server failed to start"
 	exit 1
