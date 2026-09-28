@@ -10,26 +10,40 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@main
-      - name: Nix cache
-        uses: DeterminateSystems/magic-nix-cache-action@main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
 
-      # Lint, typecheck, and unit/component tests inside the dev shell (Node +
-      # nix-provided Playwright browsers via PLAYWRIGHT_BROWSERS_PATH).
-      - name: Lint / typecheck / unit
-        run: |
-          nix develop --command bash -c '
-            npm ci &&
-            npm run lint &&
-            npm run check &&
-            npm run test:unit -- --run
-          '
+      - run: npm ci
 
-      # End-to-end against the in-process mock servers (always-on).
+      # Cache the Playwright browsers, keyed on the lockfile (Playwright version).
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: playwright-${{ runner.os }}-
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - run: npm run lint
+      - run: npm run check
+      - run: npm run test:unit -- --run
+
+      # End-to-end against the in-process mock servers (VNC + stream).
       - name: E2E (mock)
-        run: nix develop --command bash -c 'CI=1 npx playwright test'
+        run: CI=1 npx playwright test
 
-      # End-to-end against a real x11vnc + Xvfb server.
+      # End-to-end against a real x11vnc + Xvfb server (same VNC specs).
       - name: E2E (real x11vnc)
-        run: nix run .#e2e-real
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y x11vnc xvfb
+          export DISPLAY=:99
+          Xvfb :99 -screen 0 1280x800x24 &
+          sleep 1
+          x11vnc -display :99 -rfbport 5999 -nopw -forever -shared -quiet &
+          sleep 1
+          RELAY_E2E_VNC_HOST=127.0.0.1 RELAY_E2E_VNC_PORT=5999 CI=1 \
+            npx playwright test tests/dashboard.e2e.ts tests/vnc-session.e2e.ts
