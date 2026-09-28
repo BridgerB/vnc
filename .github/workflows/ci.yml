@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Cache the Playwright browsers, keyed on the lockfile (Playwright version).
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: playwright-${{ runner.os }}-
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - run: npm run lint
+      - run: npm run check
+      - run: npm run test:unit -- --run
+
+      # End-to-end against the in-process mock servers (VNC + stream).
+      - name: E2E (mock)
+        run: CI=1 npx playwright test
+
+      # Authenticity check against a REAL x11vnc + Xvfb server: the full RFB
+      # handshake + a painted frame. The interaction-heavy specs (toolbar,
+      # disconnect, input) are covered reliably by the mock step above; against a
+      # live server they're timing/flap-sensitive, so the real run asserts the
+      # protocol itself.
+      - name: E2E (real x11vnc)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y x11vnc xvfb
+          export DISPLAY=:99
+          Xvfb :99 -screen 0 1280x800x24 &
+          sleep 2
+          x11vnc -display :99 -rfbport 5999 -nopw -forever -shared -quiet &
+          sleep 2
+          RELAY_E2E_VNC_HOST=127.0.0.1 RELAY_E2E_VNC_PORT=5999 CI=1 \
+            npx playwright test tests/vnc-session.e2e.ts -g "paints a real frame"
