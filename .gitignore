@@ -33,3 +33,4 @@ static/relaycap.h264
 
 # benchmark run outputs
 bench/results/
+.bench-docker-out/
