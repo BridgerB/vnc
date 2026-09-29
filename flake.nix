@@ -1,5 +1,5 @@
 {
-  description = "Relay — web-based VNC + low-latency H.264 streaming client";
+  description = "vnc — web-based VNC + low-latency H.264 streaming client";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -45,7 +45,7 @@
         e2e-real = {
           type = "app";
           program = pkgs.lib.getExe (pkgs.writeShellApplication {
-            name = "relay-e2e-real";
+            name = "vnc-e2e-real";
             runtimeInputs = [pkgs.nodejs_22 pkgs.x11vnc pkgs.xorg.xvfb];
             text = ''
               npm ci
@@ -58,8 +58,8 @@
               x11vnc -display :99 -rfbport "$PORT" -nopw -forever -shared -quiet &
               X11VNC_PID=$!
               sleep 1
-              export RELAY_E2E_VNC_HOST=127.0.0.1
-              export RELAY_E2E_VNC_PORT="$PORT"
+              export VNC_E2E_HOST=127.0.0.1
+              export VNC_E2E_PORT="$PORT"
               export CI=1
               cleanup() { kill "$X11VNC_PID" "$XVFB_PID" 2>/dev/null || true; }
               trap cleanup EXIT

@@ -30,7 +30,7 @@ export function parseHostPort(
 
 /**
  * Parse a quick-connect string, tolerating an "ssh-style" `user@` prefix (the
- * user part is not used — Relay authenticates to the remote, not over SSH).
+ * user part is not used — vnc authenticates to the remote, not over SSH).
  */
 export function parseQuickConnect(
 	raw: string,

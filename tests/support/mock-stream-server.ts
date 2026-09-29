@@ -2,7 +2,7 @@ import { type WebSocket, WebSocketServer } from "ws";
 import { H264_KEYFRAME_BASE64 } from "./h264-keyframe.base64.ts";
 
 /**
- * A mock Relay stream server for e2e: on connect it sends one keyframe in the
+ * A mock vnc stream server for e2e: on connect it sends one keyframe in the
  * wire format StreamViewer expects — [u8 keyframe][u32 ts-ms][Annex-B AU] — and
  * records inbound JSON input messages. No NVENC/ffmpeg needed.
  */

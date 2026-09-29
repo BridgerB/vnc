@@ -5,7 +5,7 @@ export GSETTINGS_BACKEND=memory
 prof="${RESULTS:-bench/results}/bench.remmina"
 cat >"$prof" <<'EOF'
 [remmina]
-name=relay-bench
+name=vnc-bench
 protocol=VNC
 server=127.0.0.1:5900
 quality=9

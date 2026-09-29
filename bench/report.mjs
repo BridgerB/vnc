@@ -26,8 +26,8 @@ for (const [client, workload, metric, value] of rows) {
 	data[client][`${workload}.${metric}`] = value;
 }
 
-const CLIENTS = ["relay", "tigervnc", "remmina"].filter((c) => data[c]);
-const LABEL = { relay: "Relay", tigervnc: "TigerVNC", remmina: "Remmina" };
+const CLIENTS = ["vnc", "tigervnc", "remmina"].filter((c) => data[c]);
+const LABEL = { vnc: "vnc", tigervnc: "TigerVNC", remmina: "Remmina" };
 
 const get = (c, k) => data[c]?.[k] ?? "NA";
 const bytesToMb = (v) => (v === "NA" ? "NA" : (Number(v) / 1e6).toFixed(2));
@@ -43,7 +43,7 @@ const COLS = [
 ];
 
 const lines = [
-	"## VNC client benchmark — Relay vs TigerVNC vs Remmina",
+	"## VNC client benchmark — vnc vs TigerVNC vs Remmina",
 	"",
 	`| Metric | ${CLIENTS.map((c) => LABEL[c]).join(" | ")} |`,
 	`|---|${CLIENTS.map(() => "--:").join("|")}|`,
@@ -55,7 +55,7 @@ lines.push(
 	"",
 	"> **Read these as relative rankings, not absolute truth.** Shared GitHub runner VMs (no GPU, noisy neighbours); latency is capture-bounded (ffmpeg x11grab), so treat it as ordering, not glass-to-glass ms.",
 	">",
-	"> **Fairness notes:** Relay's cost is the Chromium tab **plus** the Node bridge (RFB decode + WebSocket hop); the native viewers are ~one process — so Relay's RAM is expected to be higher (browser baseline). Idle vs motion RAM is shown so the fixed browser overhead is visible. Peak RAM is a peak-of-sampled-sum. RFB traffic is server↔client bytes on loopback (for Relay, server↔bridge), reflecting encoding efficiency, not WAN. Encoding: Relay + TigerVNC use ZRLE; Remmina negotiates its own (annotated).",
+	"> **Fairness notes:** vnc's cost is the Chromium tab **plus** the Node bridge (RFB decode + WebSocket hop); the native viewers are ~one process — so vnc's RAM is expected to be higher (browser baseline). Idle vs motion RAM is shown so the fixed browser overhead is visible. Peak RAM is a peak-of-sampled-sum. RFB traffic is server↔client bytes on loopback (for vnc, server↔bridge), reflecting encoding efficiency, not WAN. Encoding: vnc + TigerVNC use ZRLE; Remmina negotiates its own (annotated).",
 );
 
 process.stdout.write(`${lines.join("\n")}\n`);

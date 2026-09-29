@@ -1,5 +1,5 @@
 /**
- * Relay stream server — runs ON the wlroots/Hyprland box (Node 23+, runs .ts natively).
+ * vnc stream server — runs ON the wlroots/Hyprland box (Node 23+, runs .ts natively).
  *
  * Pipeline: wf-recorder (wlr-screencopy) -> h264_nvenc -> Annex-B access units,
  * one shared encoder fanned out to every client over a plain `ws` WebSocket.
@@ -366,7 +366,7 @@ const main = () => {
 
 	const server = http.createServer((_req, res) => {
 		res.writeHead(200, { "content-type": "text/plain" });
-		res.end("Relay stream server — connect over ws on this port.\n");
+		res.end("vnc stream server — connect over ws on this port.\n");
 	});
 	const wss = new WebSocketServer({ server });
 
@@ -388,7 +388,7 @@ const main = () => {
 
 	server.listen(cfg.port, cfg.host, () => {
 		console.log(
-			`Relay stream server on ws://${cfg.host}:${cfg.port}  output=${cfg.output || "(default)"}  display=${cfg.waylandDisplay}`,
+			`vnc stream server on ws://${cfg.host}:${cfg.port}  output=${cfg.output || "(default)"}  display=${cfg.waylandDisplay}`,
 		);
 		console.log(
 			"Bind this to a WireGuard/VPN interface (or loopback + SSH tunnel) and firewall the LAN — the stream is not encrypted in-process.",

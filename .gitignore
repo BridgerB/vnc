@@ -29,7 +29,7 @@ test-results
 vnc-render.png
 
 # stream spike sample
-static/relaycap.h264
+static/vnccap.h264
 
 # benchmark run outputs
 bench/results/

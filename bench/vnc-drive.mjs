@@ -1,18 +1,16 @@
-// Drive the Relay client for the benchmark: launch a headful Chromium on the
+// Drive the vnc client for the benchmark: launch a headful Chromium on the
 // harness-provided DISPLAY (so its canvas renders onto a capturable X display),
-// connect to the VNC server through Relay, then hold until killed. Prints READY
+// connect to the VNC server through vnc, then hold until killed. Prints READY
 // once the canvas is visible so the harness can time first-frame.
 
 import { chromium } from "playwright";
 
-const PREVIEW = process.env.RELAY_PREVIEW_URL ?? "http://localhost:4734";
-const TARGET = process.env.RELAY_TARGET ?? "127.0.0.1:5900";
+const PREVIEW = process.env.VNC_PREVIEW_URL ?? "http://localhost:4734";
+const TARGET = process.env.VNC_TARGET ?? "127.0.0.1:5900";
 
 const t0 = Date.now();
 const step = (m) =>
-	console.error(
-		`[relay-drive] ${m} +${((Date.now() - t0) / 1000).toFixed(1)}s`,
-	);
+	console.error(`[vnc-drive] ${m} +${((Date.now() - t0) / 1000).toFixed(1)}s`);
 
 const browser = await chromium.launch({
 	headless: false,

@@ -77,7 +77,7 @@ const btnCode = (btn: number) =>
 	btn === 1 ? BTN_RIGHT : btn === 2 ? BTN_MIDDLE : BTN_LEFT;
 
 /** Create the virtual device and return handles to inject events. */
-export const createUinput = (name = "relay-virtual-input"): Uinput => {
+export const createUinput = (name = "vnc-virtual-input"): Uinput => {
 	const libc = koffi.load("libc.so.6");
 	const ioctl = libc.func("int ioctl(int fd, unsigned long request, int arg)");
 	const fd = fs.openSync(

@@ -47,7 +47,7 @@ export const startMockRfb = (opts: MockRfbOptions = {}): Promise<MockRfb> => {
 	const width = opts.width ?? 64;
 	const height = opts.height ?? 48;
 	const [r, g, b] = opts.color ?? [0x33, 0x66, 0xcc];
-	const name = opts.name ?? "relay-mock";
+	const name = opts.name ?? "vnc-mock";
 	const received: MockRfb["received"] = { pointers: [], keys: [] };
 
 	const serverInit = () => {

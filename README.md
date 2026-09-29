@@ -1,18 +1,18 @@
-# Relay
+# vnc
 
-A self-hosted **remote desktop that runs in the browser**. Relay speaks the raw VNC (RFB) protocol from a Node backend and streams the framebuffer to an HTML canvas, and — on a Linux/Wayland host with an NVIDIA GPU — adds a second, **low-latency H.264 path** (NVENC → WebCodecs) fast enough for video and games. One dashboard, two transports, no native client to install.
+A self-hosted **remote desktop that runs in the browser**. vnc speaks the raw VNC (RFB) protocol from a Node backend and streams the framebuffer to an HTML canvas, and — on a Linux/Wayland host with an NVIDIA GPU — adds a second, **low-latency H.264 path** (NVENC → WebCodecs) fast enough for video and games. One dashboard, two transports, no native client to install.
 
 Built to replace desktop viewers like TigerVNC while going further than any of them: hardware-encoded streaming, kernel-level input, and a modern web UI, all self-hosted and open.
 
 > Status: works end to end. VNC is stable against standard servers; the H.264 stream targets wlroots + NVENC hosts. See [Roadmap](#roadmap).
 
-## Why Relay
+## Why vnc
 
-Most remote-desktop tools are either a native app you install per machine (TigerVNC, Remmina, NoMachine, X2Go) or a browser VNC client with no server story (noVNC). Relay is a single web app you host once and open from any browser, and it doesn't stop at RFB — when the host can encode H.264 in hardware, Relay switches to a real video pipeline for motion-heavy work.
+Most remote-desktop tools are either a native app you install per machine (TigerVNC, Remmina, NoMachine, X2Go) or a browser VNC client with no server story (noVNC). vnc is a single web app you host once and open from any browser, and it doesn't stop at RFB — when the host can encode H.264 in hardware, vnc switches to a real video pipeline for motion-heavy work.
 
 | | In browser | Protocols | Hardware H.264 | Self-hosted | Open source |
 |---|:--:|---|:--:|:--:|:--:|
-| **Relay** | ✅ | VNC (RFB) + H.264 stream | ✅ (NVENC) | ✅ | ✅ |
+| **vnc** | ✅ | VNC (RFB) + H.264 stream | ✅ (NVENC) | ✅ | ✅ |
 | TigerVNC | ❌ | VNC (RFB) | ❌ | ✅ | ✅ |
 | Remmina | ❌ | VNC / RDP / SSH / SPICE | via RDP | ✅ | ✅ |
 | noVNC | ✅ | VNC (RFB) | ❌ | ✅ | ✅ |
@@ -109,7 +109,7 @@ Then add a stream machine in the dashboard pointing at `<host>:4735`.
 
 ## Security
 
-Relay never rolls its own transport crypto — it relies on the network layer, which is the right place for it:
+vnc never rolls its own transport crypto — it relies on the network layer, which is the right place for it:
 
 - **VNC** is bridged same-origin through the SvelteKit server; put that server behind TLS (a reverse proxy) for remote use. The bridge and the reachability probe both **refuse any target that isn't loopback or RFC 1918**, so the app can't be used to reach arbitrary hosts.
 - **The H.264 stream is not encrypted in-process by design.** Bind it to a **WireGuard/VPN interface** (or reach it over an **SSH tunnel**) and firewall the LAN. Over WireGuard the entire link is encrypted end to end and there's no cleartext video on the wire — which is also why the server needs no in-app auth token.

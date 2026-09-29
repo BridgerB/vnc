@@ -148,7 +148,7 @@ function exportProfiles() {
 	});
 	const a = document.createElement("a");
 	a.href = URL.createObjectURL(blob);
-	a.download = "relay-machines.json";
+	a.download = "vnc-machines.json";
 	a.click();
 	setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
@@ -177,7 +177,7 @@ function clearAll() {
 	<aside class="side">
 		<div class="brand">
 			<span class="logo">R</span>
-			<span class="wordmark">Relay</span>
+			<span class="wordmark">vnc</span>
 			<span class="ver mono">v2.4</span>
 		</div>
 		<nav>
@@ -242,7 +242,7 @@ function clearAll() {
 					</div>
 					<div class="empty-copy">
 						<div class="empty-h">Add your first machine</div>
-						<div class="empty-p">Relay speaks plain RFB — any VNC server works: TigerVNC, x11vnc, wayvnc, macOS Screen Sharing, a Raspberry Pi kiosk.</div>
+						<div class="empty-p">vnc speaks plain RFB — any VNC server works: TigerVNC, x11vnc, wayvnc, macOS Screen Sharing, a Raspberry Pi kiosk.</div>
 					</div>
 					<form class="empty-field" onsubmit={(e) => (e.preventDefault(), quickConnect())}>
 						<div class="field mono"><Icon name="search" size={16} class="dim" /><input bind:value={quick} placeholder="10.42.7.18:5901" /></div>
