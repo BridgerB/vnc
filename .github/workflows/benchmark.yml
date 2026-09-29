@@ -23,6 +23,10 @@ permissions:
 
 jobs:
   bench:
+    # Only the repo owner can run this — workflow_dispatch already requires write
+    # access, and this guard makes the restriction explicit even if collaborators
+    # are added later.
+    if: github.actor == 'BridgerB'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
