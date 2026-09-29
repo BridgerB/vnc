@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VNC client benchmark orchestrator: one fixed x11vnc server, then Relay,
+# VNC client benchmark orchestrator: one fixed x11vnc server, then vnc,
 # TigerVNC, and Remmina run sequentially through idle/latency/motion workloads.
 # Metrics land in bench/results/metrics.csv; a report is printed to stdout.
 set -uo pipefail
@@ -83,7 +83,7 @@ run_client() {
 	sleep 1
 }
 
-run_client relay 103 bench/clients/relay.sh 640 360 grep
+run_client vnc 103 bench/clients/vnc.sh 640 360 grep
 run_client tigervnc 101 bench/clients/tigervnc.sh 640 360 sleep
 run_client remmina 102 bench/clients/remmina.sh 640 400 sleep
 

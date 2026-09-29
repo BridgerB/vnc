@@ -1,6 +1,6 @@
 // Sample a process group's summed RSS (peak) and CPU over a fixed window, by
 // reading /proc/<pid>/stat and filtering on pgrp. Root-free and uniform across
-// clients: for Relay the group is the Node preview + Chromium tree; for a native
+// clients: for vnc the group is the Node preview + Chromium tree; for a native
 // viewer it's the single process. Appends metrics for the run.
 //
 // Peak RSS is a peak-of-summed-samples (misses sub-interval spikes) — documented

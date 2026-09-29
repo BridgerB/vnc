@@ -54,7 +54,7 @@ wait_port() {
 }
 
 # --- server (TigerVNC Xvnc: X server + reference RFB server in one) -------
-# Using Xvnc (not x11vnc) so ContinuousUpdates — which Relay negotiates — is
+# Using Xvnc (not x11vnc) so ContinuousUpdates — which vnc negotiates — is
 # actually honoured; x11vnc's push is weak and starves continuous-update clients
 # while polling viewers keep pulling, which would be an unfair confound.
 start_server() {

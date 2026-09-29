@@ -8,10 +8,10 @@ export interface VncTarget {
 	mock: MockRfb | null;
 }
 
-// When RELAY_E2E_VNC_HOST/PORT are set (the flake's `e2e-real` app points them at
+// When VNC_E2E_HOST/PORT are set (the flake's `e2e-real` app points them at
 // a real x11vnc+Xvfb), the same specs run against that instead of the mock.
-const realHost = process.env.RELAY_E2E_VNC_HOST;
-const realPort = process.env.RELAY_E2E_VNC_PORT;
+const realHost = process.env.VNC_E2E_HOST;
+const realPort = process.env.VNC_E2E_PORT;
 
 export const test = base.extend<{ vnc: VncTarget }>({
 	// biome-ignore lint/correctness/noEmptyPattern: Playwright requires the fixtures destructuring pattern

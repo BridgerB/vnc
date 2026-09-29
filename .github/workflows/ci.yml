@@ -49,5 +49,5 @@ jobs:
           sleep 2
           x11vnc -display :99 -rfbport 5999 -nopw -forever -shared -quiet &
           sleep 2
-          RELAY_E2E_VNC_HOST=127.0.0.1 RELAY_E2E_VNC_PORT=5999 CI=1 \
+          VNC_E2E_HOST=127.0.0.1 VNC_E2E_PORT=5999 CI=1 \
             npx playwright test tests/vnc-session.e2e.ts -g "paints a real frame"

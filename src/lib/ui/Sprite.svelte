@@ -1,4 +1,4 @@
-<!-- Inline SVG symbol sprite (Relay icon set, 1.85 stroke line style). Rendered
+<!-- Inline SVG symbol sprite (vnc icon set, 1.85 stroke line style). Rendered
      once at the app root; reference with <Icon name="full" />. -->
 <svg width="0" height="0" style="position: absolute; overflow: hidden" aria-hidden="true">
 	<symbol id="r-full" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M16 3h3a2 2 0 0 1 2 2v3" /><path d="M21 16v3a2 2 0 0 1-2 2h-3" /><path d="M3 16v3a2 2 0 0 0 2 2h3" /></symbol>

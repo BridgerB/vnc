@@ -58,7 +58,7 @@ function onThumbnail(dataUrl: string) {
 }
 </script>
 
-<svelte:head><title>Relay — VNC</title></svelte:head>
+<svelte:head><title>vnc</title></svelte:head>
 
 {#if view === "session"}
 	<Session

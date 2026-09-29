@@ -1,5 +1,5 @@
 /**
- * Shared domain types for Relay. Plain data only (CODE_STYLE §1/§3): every value
+ * Shared domain types for vnc. Plain data only (CODE_STYLE §1/§3): every value
  * here survives JSON, localStorage, and the WebSocket wire without a prototype.
  */
 
