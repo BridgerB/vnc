@@ -175,7 +175,10 @@ export class RfbClient extends EventEmitter {
 	private rect: RectHeader | null = null;
 
 	// One persistent zlib stream shared across every ZRLE rectangle for the whole
-	// connection (required by the ZRLE spec — never reset it).
+	// connection (required by the ZRLE spec — never reset it). pako's pure-JS
+	// inflate is used deliberately: a network-facing decoder must reject malformed
+	// input safely, and driving node:zlib's native handle directly aborts the
+	// process on a zlib error instead of throwing.
 	private readonly inflate = new Inflate();
 	private inflateChunks: Buffer[] = [];
 
